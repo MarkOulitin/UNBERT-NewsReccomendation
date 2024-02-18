@@ -147,6 +147,8 @@ class MindDataset(Dataset):
             news[news_id]['title'] = self._tokenizer.convert_tokens_to_ids(title_words)
             abstract_words = self._tokenizer.tokenize(abstract)
             news[news_id]['abstract'] = self._tokenizer.convert_tokens_to_ids(abstract_words)
+            category = splitted[1].lower()
+            news[news_id]['category'] = self._tokenizer.convert_tokens_to_ids(category)
         return news
 
     def collate(self, batch: Dict[str, Any]):
@@ -179,12 +181,16 @@ class MindDataset(Dataset):
 
     def pack_bert_features(self, example: Any):
         curr_news = self._news[example['news_id']]['title'][:self._news_max_len]
+        curr_news_category = self._news[example['news_id']]['category']
         news_segment_ids = []
         hist_news = []
+        category_segment_ids = []
         sentence_ids = [0, 1, 2]
         for i, ns in enumerate(example['news_history'].split()[:self._hist_max_len]):
             ids = self._news[ns]['title'][:self._news_max_len]
+            category_id = self._news[ns]['category']
             hist_news += ids
+            category_segment_ids += [category_id] * len(ids)
             news_segment_ids += [i + 2] * len(ids)
             sentence_ids.append(sentence_ids[-1] + 1)
         
@@ -193,6 +199,7 @@ class MindDataset(Dataset):
         input_ids = [self._tokenizer.cls_token_id] + curr_news + [self._tokenizer.sep_token_id] \
                     + hist_news + [self._tokenizer.sep_token_id]
         news_segment_ids = [0] + [1] * len(curr_news) + [0] + news_segment_ids[:tmp_hist_len] + [0]
+        category_segment_ids = [0] + [curr_news_category] * len(curr_news) + [0] + category_segment_ids[:tmp_hist_len] + [0]
         segment_ids = [0] * (len(curr_news) + 2) + [1] * (len(hist_news) + 1)
         input_mask = [1] * len(input_ids)
 
@@ -201,6 +208,7 @@ class MindDataset(Dataset):
         input_mask = input_mask + [0] * padding_len
         segment_ids = segment_ids + [0] * padding_len
         news_segment_ids = news_segment_ids + [0] * padding_len
+        category_segment_ids = category_segment_ids + [0] * padding_len
 
         sentence_segment_ids = [0] * 3 + [1] * (len(sentence_ids) - 3)
         sentence_mask = [1] * len(sentence_ids)
@@ -217,22 +225,24 @@ class MindDataset(Dataset):
         assert len(input_mask) == self._seq_max_len
         assert len(segment_ids) == self._seq_max_len
         assert len(news_segment_ids) == self._seq_max_len
+        assert len(category_segment_ids) == self._seq_max_len
 
         assert len(sentence_ids) == sentence_max_len
         assert len(sentence_mask) == sentence_max_len
         assert len(sentence_segment_ids) == sentence_max_len
 
-        return input_ids, input_mask, segment_ids, news_segment_ids, \
+        return input_ids, input_mask, segment_ids, news_segment_ids, category_segment_ids, \
                 sentence_ids, sentence_mask, sentence_segment_ids
 
     def __getitem__(self, index: int) -> Dict[str, Any]:
         example = self._examples.iloc[index]
-        input_ids, input_mask, segment_ids, news_segment_ids, \
+        input_ids, input_mask, segment_ids, news_segment_ids, category_segment_ids, \
             sentence_ids, sentence_mask, sentence_segment_ids = self.pack_bert_features(example)
         inputs = {'input_ids': input_ids, 
                   'segment_ids': segment_ids, 
                   'input_mask': input_mask, 
                   'news_segment_ids': news_segment_ids, 
+                  'category_segment_ids': category_segment_ids, 
                   'sentence_ids': sentence_ids, 
                   'sentence_mask': sentence_mask, 
                   'sentence_segment_ids': sentence_segment_ids,

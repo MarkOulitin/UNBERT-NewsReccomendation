@@ -157,6 +157,7 @@ def main():
                                     train_batch['input_mask'].to(device), 
                                     train_batch['segment_ids'].to(device),
                                     train_batch['news_segment_ids'].to(device),
+                                    train_batch['category_segment_ids'].to(device),
                                     train_batch['sentence_ids'].to(device),
                                     train_batch['sentence_mask'].to(device),
                                     train_batch['sentence_segment_ids'].to(device),

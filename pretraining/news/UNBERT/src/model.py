@@ -58,6 +58,7 @@ class UNBERT(nn.Module):
                 input_mask: torch.Tensor = None, 
                 segment_ids: torch.Tensor = None,
                 news_segment_ids: torch.Tensor = None,
+                category_segment_ids: torch.Tensor = None,
                 sentence_ids: torch.Tensor = None,
                 sentence_mask: torch.Tensor = None,
                 sentence_segment_ids: torch.Tensor = None
@@ -66,6 +67,7 @@ class UNBERT(nn.Module):
                              attention_mask = input_mask, 
                              token_type_ids = segment_ids,
                              news_segment_ids = news_segment_ids,
+                             category_segment_ids = category_segment_ids,
                              sentence_input = (sentence_ids, sentence_mask, sentence_segment_ids),
                              news_mode=self._news_mode,
                              att_mapping=self.att)

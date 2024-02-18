@@ -42,13 +42,15 @@ class UNBertEmbeddings(nn.Module):
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
         # add segment embeddings
         self.segment_embeddings = nn.Embedding(64, config.hidden_size)
+        # add category segment embeddings
+        # self.category_segment_embeddings = nn.Embedding(64, config.hidden_size)
 
         # self.LayerNorm is not snake-cased to stick with TensorFlow model variable name and be able to load
         # any TensorFlow checkpoint file
         self.LayerNorm = BertLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
-    def forward(self, input_ids=None, token_type_ids=None, position_ids=None, inputs_embeds=None, news_segment_ids=None):
+    def forward(self, input_ids=None, token_type_ids=None, position_ids=None, inputs_embeds=None, news_segment_ids=None, category_segment_ids=None):
         if input_ids is not None:
             input_shape = input_ids.size()
         else:
@@ -71,6 +73,9 @@ class UNBertEmbeddings(nn.Module):
         if news_segment_ids is not None:
             segment_embeddings = self.segment_embeddings(news_segment_ids)
             embeddings += segment_embeddings
+        if category_segment_ids is not None:
+            category_segment_embeddings = self.word_embeddings(category_segment_ids)
+            embeddings += category_segment_embeddings
         embeddings = self.LayerNorm(embeddings)
         embeddings = self.dropout(embeddings)
         return embeddings
@@ -110,6 +115,7 @@ class UNBertModel(BertPreTrainedModel):
         token_type_ids=None,
         position_ids=None,
         news_segment_ids=None,
+        category_segment_ids=None,
         head_mask=None,
         inputs_embeds=None,
         encoder_hidden_states=None,
@@ -160,6 +166,7 @@ class UNBertModel(BertPreTrainedModel):
             token_type_ids=token_type_ids, 
             inputs_embeds=inputs_embeds,
             news_segment_ids=news_segment_ids,
+            category_segment_ids=category_segment_ids,
         )
         
         # word-level matching
