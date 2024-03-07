@@ -162,7 +162,9 @@ def main():
                                     train_batch['sentence_mask'].to(device),
                                     train_batch['sentence_segment_ids'].to(device),
                                     )
-                batch_loss = loss_fn(batch_score, train_batch['label'].to(device))
+                print(batch_score)
+                print(type(batch_score))
+                batch_loss = loss_fn(batch_score.long(), train_batch['label'].to(device).long())
                 if torch.cuda.device_count() > 1:
                     batch_loss = batch_loss.mean()
                 avg_loss += batch_loss.item()
