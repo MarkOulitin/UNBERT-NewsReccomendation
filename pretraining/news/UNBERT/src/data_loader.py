@@ -178,6 +178,7 @@ class MindDataset(Dataset):
             return inputs 
         elif self._mode == 'test':
             inputs['impression_id'] = [item['impression_id'] for item in batch]
+            return inputs
         else:
             raise ValueError('Mode must be `train`, `dev` or `test`.')
 

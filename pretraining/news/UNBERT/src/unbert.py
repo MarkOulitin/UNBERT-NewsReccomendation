@@ -43,8 +43,8 @@ class UNBertEmbeddings(nn.Module):
         # add segment embeddings
         self.segment_embeddings = nn.Embedding(64, config.hidden_size)
         # add category segment embeddings
-        # self.category_segment_embeddings = nn.Embedding(64, config.hidden_size)
-
+        self.category_segment_embeddings = nn.Embedding(config.vocab_size, config.hidden_size)
+        self._config = config
         # self.LayerNorm is not snake-cased to stick with TensorFlow model variable name and be able to load
         # any TensorFlow checkpoint file
         self.LayerNorm = BertLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
@@ -70,11 +70,12 @@ class UNBertEmbeddings(nn.Module):
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
 
         embeddings = inputs_embeds + position_embeddings + token_type_embeddings
+
         if news_segment_ids is not None:
             segment_embeddings = self.segment_embeddings(news_segment_ids)
             embeddings += segment_embeddings
         if category_segment_ids is not None:
-            category_segment_embeddings = self.word_embeddings(category_segment_ids)
+            category_segment_embeddings = self.category_segment_embeddings(category_segment_ids)
             embeddings += category_segment_embeddings
         embeddings = self.LayerNorm(embeddings)
         embeddings = self.dropout(embeddings)
