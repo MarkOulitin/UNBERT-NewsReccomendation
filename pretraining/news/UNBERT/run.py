@@ -112,7 +112,8 @@ def main():
             split=args.split,
             news_max_len=args.news_max_len,
             hist_max_len=args.hist_max_len,
-            seq_max_len=args.seq_max_len
+            seq_max_len=args.seq_max_len,
+            is_training=True,
         )
         train_loader = DataLoader(
             dataset=train_set,

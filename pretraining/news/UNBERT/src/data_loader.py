@@ -63,7 +63,8 @@ class MindDataset(Dataset):
             split: str = 'small', 
             news_max_len: int = 20,
             hist_max_len: int = 20,
-            seq_max_len: int = 300
+            seq_max_len: int = 300,
+            is_training: bool = False,
             ) -> None:
         super(MindDataset, self).__init__()
         self.data_path = os.path.join(root, split)
@@ -75,7 +76,7 @@ class MindDataset(Dataset):
         self._news_max_len = news_max_len
         self._hist_max_len = hist_max_len
         self._seq_max_len = seq_max_len
-
+        self.is_training = is_training
         self._examples = self.get_examples(negative_sampling=4)
         #print(self._examples.head())
         self._news = self.process_news()
@@ -131,6 +132,12 @@ class MindDataset(Dataset):
             ) -> Dict[str, Any]:
         with open(os.path.join(filepath, 'news.tsv'), encoding='utf-8') as f:
             lines = f.readlines()
+        df_back_translation = pd.read_csv('./french_hilsinki_final.csv')
+        df_back_translation.set_index('news_id', inplace=True)
+        
+        df_paraphrasing = pd.read_csv('./final_T5_gpt.csv')
+        df_paraphrasing.set_index('news_id', inplace=True)
+        
         for line in lines:
             info = dict()
             splitted = line.strip('\n').split('\t')
@@ -145,6 +152,19 @@ class MindDataset(Dataset):
             news[news_id] = dict()
             title_words = self._tokenizer.tokenize(title)
             news[news_id]['title'] = self._tokenizer.convert_tokens_to_ids(title_words)
+            
+            title_back_translated = df_back_translation.loc[news_id, 'french_augmentation']
+            title_back_translated = remove_stopword(title_back_translated)
+            title_back_translated_words = self._tokenizer.tokenize(title_back_translated)
+            news[news_id]['title-back-translated'] = self._tokenizer.convert_tokens_to_ids(title_back_translated_words)
+            
+            title_paraphrases = df_paraphrasing.loc[news_id]
+            for augmentation_index in range(5):
+                title_paraphrased = title_paraphrases[f'chatgpt_t5_augmentation_{augmentation_index}']
+                title_paraphrased = remove_stopword(title_paraphrased)
+                title_paraphrased_words = self._tokenizer.tokenize(title_paraphrased)
+                news[news_id][f'title-paraphrased-{augmentation_index}'] = self._tokenizer.convert_tokens_to_ids(title_paraphrased_words)
+            
             abstract_words = self._tokenizer.tokenize(abstract)
             news[news_id]['abstract'] = self._tokenizer.convert_tokens_to_ids(abstract_words)
         return news
@@ -178,7 +198,11 @@ class MindDataset(Dataset):
             raise ValueError('Mode must be `train`, `dev` or `test`.')
 
     def pack_bert_features(self, example: Any):
-        curr_news = self._news[example['news_id']]['title'][:self._news_max_len]
+        if self.is_training and np.random.random() >= 0.7:
+            news_obj = self._news[example['news_id']]
+            curr_news = news_obj['title-back-translated'][:self._news_max_len]
+        else:
+            curr_news = self._news[example['news_id']]['title'][:self._news_max_len]
         news_segment_ids = []
         hist_news = []
         sentence_ids = [0, 1, 2]
