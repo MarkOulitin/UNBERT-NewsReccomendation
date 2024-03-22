@@ -135,9 +135,6 @@ class MindDataset(Dataset):
         df_back_translation = pd.read_csv('./french_hilsinki_final.csv')
         df_back_translation.set_index('news_id', inplace=True)
         
-        df_paraphrasing = pd.read_csv('./final_T5_gpt.csv')
-        df_paraphrasing.set_index('news_id', inplace=True)
-        
         for line in lines:
             info = dict()
             splitted = line.strip('\n').split('\t')
@@ -157,13 +154,6 @@ class MindDataset(Dataset):
             title_back_translated = remove_stopword(title_back_translated)
             title_back_translated_words = self._tokenizer.tokenize(title_back_translated)
             news[news_id]['title-back-translated'] = self._tokenizer.convert_tokens_to_ids(title_back_translated_words)
-            
-            title_paraphrases = df_paraphrasing.loc[news_id]
-            for augmentation_index in range(5):
-                title_paraphrased = title_paraphrases[f'chatgpt_t5_augmentation_{augmentation_index}']
-                title_paraphrased = remove_stopword(title_paraphrased)
-                title_paraphrased_words = self._tokenizer.tokenize(title_paraphrased)
-                news[news_id][f'title-paraphrased-{augmentation_index}'] = self._tokenizer.convert_tokens_to_ids(title_paraphrased_words)
             
             abstract_words = self._tokenizer.tokenize(abstract)
             news[news_id]['abstract'] = self._tokenizer.convert_tokens_to_ids(abstract_words)
