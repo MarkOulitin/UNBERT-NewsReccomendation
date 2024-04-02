@@ -153,7 +153,7 @@ def main():
             avg_loss = 0.0
             batch_iterator = tqdm(train_loader, disable=False)
             for step, train_batch in enumerate(batch_iterator):
-                batch_score = model(train_batch['input_ids'].to(device), 
+                batch_score = model(train_batch['input_ids'].to(device),
                                     train_batch['input_mask'].to(device), 
                                     train_batch['segment_ids'].to(device),
                                     train_batch['news_segment_ids'].to(device),
@@ -162,6 +162,7 @@ def main():
                                     train_batch['sentence_mask'].to(device),
                                     train_batch['sentence_segment_ids'].to(device),
                                     )
+
                 batch_loss = loss_fn(batch_score, train_batch['label'].to(device))
                 if torch.cuda.device_count() > 1:
                     batch_loss = batch_loss.mean()
@@ -170,6 +171,7 @@ def main():
                 m_optim.step()
                 m_scheduler.step()
                 m_optim.zero_grad()
+
             auc = dev(model, dev_loader, device, args.output, is_epoch=True)
             printzzz("Epoch {}, AUC: {:.4f}".format(epoch+1, auc))
             final_path = os.path.join(args.output, "epoch_{}.bin".format(epoch+1))

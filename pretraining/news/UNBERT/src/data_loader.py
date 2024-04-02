@@ -156,13 +156,15 @@ class MindDataset(Dataset):
         segment_ids = torch.tensor([item['segment_ids'] for item in batch])
         input_mask = torch.tensor([item['input_mask'] for item in batch])
         news_segment_ids = torch.tensor([item['news_segment_ids'] for item in batch])
+        category_segment_ids = torch.tensor([item['category_segment_ids'] for item in batch])
         sentence_ids = torch.tensor([item['sentence_ids'] for item in batch])
         sentence_mask = torch.tensor([item['sentence_mask'] for item in batch])
         sentence_segment_ids = torch.tensor([item['sentence_segment_ids'] for item in batch])
         inputs = {'input_ids': input_ids, 
                   'segment_ids': segment_ids, 
                   'input_mask': input_mask, 
-                  'news_segment_ids': news_segment_ids, 
+                  'news_segment_ids': news_segment_ids,
+                  'category_segment_ids' : category_segment_ids,
                   'sentence_ids': sentence_ids, 
                   'sentence_mask': sentence_mask, 
                   'sentence_segment_ids': sentence_segment_ids, 
@@ -176,6 +178,7 @@ class MindDataset(Dataset):
             return inputs 
         elif self._mode == 'test':
             inputs['impression_id'] = [item['impression_id'] for item in batch]
+            return inputs
         else:
             raise ValueError('Mode must be `train`, `dev` or `test`.')
 

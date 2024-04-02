@@ -49,8 +49,10 @@ def dev(model, dev_loader, device, out_path, is_epoch=False):
                                 dev_batch['input_mask'].to(device), 
                                 dev_batch['segment_ids'].to(device),
                                 dev_batch['news_segment_ids'].to(device),
+                                dev_batch['category_segment_ids'].to(device),
                                 dev_batch['sentence_ids'].to(device),
                                 dev_batch['sentence_mask'].to(device),
+
                                 dev_batch['sentence_segment_ids'].to(device))
             batch_score = batch_score.softmax(dim=-1)[:, 1].squeeze(-1)
             batch_score = batch_score.detach().cpu().tolist()
@@ -97,6 +99,7 @@ def test(model, test_loader, device, out_path):
                                 test_batch['input_mask'].to(device), 
                                 test_batch['segment_ids'].to(device),
                                 test_batch['news_segment_ids'].to(device),
+                                test_batch['category_segment_ids'].to(device),
                                 test_batch['sentence_ids'].to(device),
                                 test_batch['sentence_mask'].to(device),
                                 test_batch['sentence_segment_ids'].to(device))
